@@ -1,0 +1,812 @@
+' *****Chemistry  'A' Level Course 1992*****
+' *****      The Quantum Interface     *****
+' *****          By Mark Jones         *****
+' *****Incorporating the ZEST Interface*****
+timesround=0
+DIM gridsize(2)
+DIM seed(2)
+DIM xk(2)
+DIM yk(2)
+DIM g(2)
+DIM rg(2)
+DIM rx(4)
+DIM blk$(2)
+DIM scr$(15)
+DIM f(2,50)
+DIM maxo(3)
+DIM s$(2,45)
+DIM ran(4)
+DIM label$(3)
+DIM label2$(4)
+DIM co(4,4)
+dr$=""
+in$=""
+cache$=""
+start:
+goback=0
+gridsize(1)=3
+gridsize(2)=3
+seed(1)=1
+seed(2)=1
+freq=833
+activ!=0
+IF timesround<>1 THEN
+  GOSUB init
+  GOSUB draw_screen
+  GET 353,227,494,243,over$
+  GET 350,182,400,194,over2$
+  GRAPHMODE 2
+  TEXT 350,116,"3"
+  TEXT 350,150,"1"
+  TEXT 350,193,"833"
+  TEXT 354,286,"3"
+  TEXT 354,323,"1"
+  TEXT 392,241,"Inactive"
+  DEFTEXT 1,0,0,13
+  TEXT 520,390,"½ M.Jones 1992"
+  DEFTEXT 1,0,0,13
+  SGET in$
+ELSE
+  SPUT in$
+ENDIF
+GRAPHMODE 1
+DEFTEXT 1,0,0,13
+GOSUB monitor_mouse
+DEFFILL 1,2,8
+DEFLINE 0,1
+COLOR 1
+GRAPHMODE 1
+fl=0
+fl2=0
+fl3=0
+pp=0
+scr=1
+takescreen=0
+g(1)=gridsize(1)
+g(2)=gridsize(2)
+gmax=MAX(g(1),g(2))
+IF timesround=0
+  IF activ!<>0 THEN
+    DIM grid(gmax,gmax,2)
+  ELSE
+    DIM grid(g(1),g(1),2)
+  ENDIF
+ELSE
+  ERASE grid()
+  IF activ!<>0 THEN
+    DIM grid(gmax,gmax,2)
+  ELSE
+    DIM grid(g(1),g(1),2)
+  ENDIF
+ENDIF
+label$(1)="Grid 1"
+label$(2)="Grid 2"
+label$(3)="Combined"
+label2$(1)=" Store Screen "
+label2$(2)=" View Screens "
+label2$(3)=" Continue "
+label2$(4)="  End Simulation "
+kk=1
+xk(1)=640/g(1)
+yk(1)=400/g(1)
+xk(2)=640/g(2)
+yk(2)=400/g(2)
+IF timesround=0 THEN
+  FOR n=1 TO 4
+    FOR m=1 TO 4
+      READ a
+      co(n,m)=a
+    NEXT m
+  NEXT n
+ENDIF
+HIDEM
+FOR i=2 TO 1 STEP -1
+  IF activ!=0 AND i=2 THEN
+    GOTO ien
+  ENDIF
+  IF g(1)=g(2) AND activ!<>0 AND i=2 THEN
+    fl2=1
+    GOTO ien
+  ENDIF
+  IF timesround=0 THEN
+    DEFTEXT 1,0,0,32
+    TEXT 259,273,"Cacheing Permutations"
+    GET 250,250,620,280,cache$
+    DEFTEXT 1,0,0,13
+  ELSE
+    PUT 250,250,cache$
+  ENDIF
+  kk=i
+  xt=xk(i)
+  yt=yk(i)
+  FOR n=0 TO xt STEP xt
+    LINE n,0,n,399
+  NEXT n
+  FOR n=0 TO yt STEP yt
+    LINE 0,n,639,n
+  NEXT n
+  PBOX 0,yt,xt,399
+  PBOX xt,0,639,yt
+  GET 0,0,INT(xt),INT(yt),blk$(i)
+  r=0.375*xt
+  s=0.375*yt
+  sx=INT(xt/21.333333333)
+  x=1
+  y=1
+  z=0
+  IF sx<>0 THEN
+    qu=15
+    FOR m=0 TO 15
+      qu=15
+      no=m
+      GOSUB dot
+      GET 0,0,INT(xt),INT(yt),s$(i,m)
+    NEXT m
+  ELSE
+    FOR m=0 TO 30
+      qu=30
+      no=m
+      GOSUB p_number
+      GET 0,0,INT(xt),INT(yt),s$(i,m)
+    NEXT m
+  ENDIF
+  CLS
+ien:
+NEXT i
+IF fl2=1 THEN
+  fl2=0
+  blk$(2)=blk$(1)
+  FOR n=0 TO qu
+    s$(2,n)=s$(1,n)
+  NEXT n
+ENDIF
+' ***** Store All Permutations End *****
+' ***** Initialize Both Grids Start *****
+FOR i=2 TO 1 STEP -1
+  IF activ!=0 AND i=2 THEN
+    GOTO ien2
+  ENDIF
+  no=seed(i)
+  FOR y=1 TO g(i)
+    FOR x=1 TO g(i)
+      IF seed(i)=6 THEN
+        no=INT(RND*6)
+      ENDIF
+      grid(x,y,i)=no
+      IF i=1 THEN
+        GOSUB place
+      ENDIF
+    NEXT x
+  NEXT y
+ien2:
+NEXT i
+' ***** Initialize Both Grids End *****
+DO
+  IF activ!<>0 AND MOUSEK=1 THEN
+    GOSUB change_display
+  ENDIF
+  IF MOUSEK=2 THEN
+    GOSUB display_data
+    IF goback=3
+      GOTO start
+    ENDIF
+  ENDIF
+  EXIT IF INKEY$<>""
+LOOP
+RANDOMIZE
+' ***** Random Shuffling Start *****
+pp=0
+goback:
+gef=freq+pp
+FOR mo=1+pp TO gef
+  IF activ!<>0 AND MOUSEK=1 THEN
+    GOSUB change_display
+  ENDIF
+  IF MOUSEK=2 THEN
+    GOSUB display_data
+  ENDIF
+  IF goback=3 THEN
+    GOTO endrand
+  ENDIF
+reand:
+  IF activ!=0 THEN
+    rg(1)=1
+    rg(2)=1
+  ELSE
+    rg(1)=INT(RND*2)+1
+    rg(2)=INT(RND*2)+1
+  ENDIF
+  FOR m=1 TO 2
+    ran(m)=INT(RND*g(rg(1)))+1
+  NEXT m
+  FOR m=3 TO 4
+    ran(m)=INT(RND*g(rg(2)))+1
+  NEXT m
+  IF grid(ran(1),ran(2),rg(1))=0 THEN
+    GOTO reand
+  ELSE
+    DEC grid(ran(1),ran(2),rg(1))
+    IF kk=rg(1) THEN
+      no=grid(ran(1),ran(2),rg(1))
+      x=ran(1)
+      y=ran(2)
+      GOSUB place
+    ENDIF
+    INC grid(ran(3),ran(4),rg(2))
+    IF kk=rg(2) THEN
+      no=grid(ran(3),ran(4),rg(2))
+      x=ran(3)
+      y=ran(4)
+      GOSUB place
+    ENDIF
+  ENDIF
+  INC pp
+  GOTO er
+endrand:
+  mo=gef
+er:
+NEXT mo
+IF goback=3 THEN
+  GOTO start
+ENDIF
+DEC mo
+GOSUB display_data
+IF goback=2 THEN
+  GOTO goback
+ENDIF
+IF goback=3 THEN
+  GOTO start
+ENDIF
+PROCEDURE dot
+  DEFFILL 1,2,8
+  PUT (x-1)*xt,(y-1)*yt,blk$(kk)
+  xx=(x-0.5)*xt
+  yy=(y-0.5)*yt
+  IF sx>1 THEN
+    fl=1
+  ELSE
+    fl=0
+  ENDIF
+  IF no<>0 THEN
+    FOR n=1 TO 360 STEP 360/no
+      g=(PI/180)*n
+      IF fl=0 THEN
+        BOX (r*COS(g))+xx,(s*SIN(g))+yy,(r*COS(g))+xx+sx,(s*SIN(g))+yy+sx
+      ELSE
+        PCIRCLE (r*COS(g))+xx,(s*SIN(g))+yy,sx
+      ENDIF
+    NEXT n
+  ENDIF
+RETURN
+PROCEDURE place
+  IF no>15 AND INT(xt)<21 THEN
+    PUT (x-1)*xt,(y-1)*yt,s$(kk,no)
+    GOTO endplace
+  ENDIF
+  IF no<16 THEN
+    PUT (x-1)*xt,(y-1)*yt,s$(kk,no)
+  ELSE
+    PUT (x-1)*xt,(y-1)*yt,blk$(kk)
+    DEFTEXT 1,0,0,8
+    GRAPHMODE 2
+    TEXT ((x-1)*xt)+(xt/2)-10,((y-1)*yt)+(yt/2)+4,no
+    GRAPHMODE 1
+  ENDIF
+endplace:
+RETURN
+PROCEDURE p_number
+  PUT (x-1)*xt,(y-1)*yt,blk$(kk)
+  GRAPHMODE 2
+  DEFTEXT 1,0,0,4
+  IF no<>0 THEN
+    xz=4*INT(LOG10(no))+2
+  ELSE
+    xz=2
+  ENDIF
+  IF no=10
+    ADD xz,4
+  ENDIF
+  IF no=10 THEN
+  ENDIF
+  TEXT (xt/2)-xz,(yt/2)+2,no
+  GRAPHMODE 1
+RETURN
+PROCEDURE change_display
+  CLS
+  DEFTEXT 1,0,0,32
+  TEXT 192,208,"Switch to Grid "+STR$(3-kk)
+  REPEAT
+  UNTIL MOUSEK=0
+  PAUSE 5
+  IF kk=1 THEN
+    kk=2
+  ELSE
+    kk=1
+  ENDIF
+  xt=xk(kk)
+  yt=yk(kk)
+  CLS
+  FOR y=1 TO g(kk)
+    FOR x=1 TO g(kk)
+      no=grid(x,y,kk)
+      GOSUB place
+    NEXT x
+  NEXT y
+RETURN
+PROCEDURE display_data
+  dr$=""
+  SGET dr$
+  CLS
+  k=30
+  GRAPHMODE 1
+  DEFTEXT 1,8,0,13
+  TEXT 1,12,"Move : "+STR$(pp)
+  a$="Distribution Bar Charts"
+  b$="(Number of Oscillators Against Quanta)"
+  TEXT 228,12,a$
+  DEFTEXT 1,0,0,4
+  TEXT 206,20,b$
+  GOSUB collate_quanta
+  FOR i=3 TO 1 STEP -1
+    IF activ!=0 AND i>1 THEN
+      GOTO ien4
+    ENDIF
+    DEFLINE 1,2
+    LINE 39,((i-1)*120)+k,39,(i*120)-20+k
+    LINE 39,(i*120)-20+k,639,(i*120)-20+k
+    DEFTEXT 1,0,0,4
+    DEFLINE 1,2
+    IF maxo(i)<5 THEN
+      maxo(i)=5
+    ENDIF
+    FOR m=0 TO 30
+      IF m=0 THEN
+        zx=0
+      ELSE
+        zx=INT(LOG10(m))*4
+      ENDIF
+      IF m=10 THEN
+        zx=4
+      ENDIF
+      DEFFILL 1,2,i
+      IF i<>3 THEN
+        PBOX 39+((600/31)*m),(i*120)-20+k,(39+((600/31)*m))+19,((i*120)-20)-(f(i,m)*(100/maxo(i)))+k
+      ELSE
+        PBOX 39+((600/31)*m),(i*120)-20+k,(39+((600/31)*m))+19,((i*120)-20)-((f(1,m)+f(2,m))*(100/maxo(i)))+k
+      ENDIF
+      '      LINE 39+((600/31)*m),(i*120)-20,39+((600/31)*m),(i*120)-17
+      TEXT 47+((600/31)*m)-zx+1,(i*120)-12+k,m
+    NEXT m
+    DEFTEXT 1,0,900,4
+    TEXT 6,((i*120)-68)+((LEN(label$(i))*4)/2)+k,label$(i)
+    DEFTEXT 1,0,0,4
+    FOR m=0 TO 100 STEP 100/5
+      zn=((i*120)-20)-m
+      num=INT(maxo(i)*(m/100))
+      IF num=10 THEN
+        fl3=1
+      ENDIF
+      LINE 36,zn+k,39,zn+k
+      IF num=0 THEN
+        zx=0
+      ELSE
+        zf=INT(LOG10(num))
+        zx=zf*7
+      ENDIF
+      IF num=10 THEN
+        zx=7
+      ENDIF
+      IF num=100 THEN
+        zx=14
+      ENDIF
+      IF num=1000 THEN
+        zx=21
+      ENDIF
+      TEXT 30-zx,zn+2+k,num
+    NEXT m
+  ien4:
+  NEXT i
+  DEFFILL 1,2,8
+  TEXT 155,397,label2$(1)
+  TEXT 239,397,label2$(2)
+  TEXT 323,397,label2$(3)
+  TEXT 383,397,label2$(4)
+  BOX 155,390,485,399
+  LINE 239,390,239,399
+  LINE 323,390,323,399
+  LINE 383,390,383,399
+  SHOWM
+redo:
+  DO
+    mx=MOUSEX
+    my=MOUSEY
+    mk=MOUSEK
+    EXIT IF mk=1 AND my>389
+  LOOP
+  IF mx>co(1,1) AND mx<co(1,3) THEN
+    GRAPHMODE 3
+    PBOX co(1,1),co(1,2),co(1,3),co(1,4)
+    REPEAT
+    UNTIL MOUSEK=0
+    PBOX co(1,1),co(1,2),co(1,3),co(1,4)
+    GRAPHMODE 1
+    IF scr<16 AND takescreen<>1 THEN
+      GET 0,0,639,389,scr$(scr)
+      GRAPHMODE 3
+      PBOX 0,0,639,389
+      PAUSE 5
+      PBOX 0,0,639,389
+      GRAPHMODE 1
+      takescreen=1
+      INC scr
+    ENDIF
+    goback=1
+  ENDIF
+  IF mx>co(2,1) AND mx<co(2,3) THEN
+    hh$=INKEY$
+    GRAPHMODE 3
+    PBOX co(2,1),co(2,2),co(2,3),co(2,4)
+    REPEAT
+    UNTIL MOUSEK=0
+    PBOX co(2,1),co(2,2),co(2,3),co(2,4)
+    GRAPHMODE 1
+    sc=1
+    HIDEM
+    DO
+      IF sc<16 THEN
+        PUT 0,0,scr$(sc)
+      ENDIF
+      DEFTEXT 1,8,0,13
+      TEXT 564,12,"Screen "+STR$(sc)
+      DEFTEXT 1,0,0,4
+      REPEAT
+        mk=MOUSEK
+        IF INKEY$<>"" THEN
+          mk=3
+        ENDIF
+      UNTIL mk=1 OR mk=2 OR mk=3
+      EXIT IF mk=3
+      REPEAT
+      UNTIL MOUSEK=0
+      IF mk=1 AND sc<scr-1 AND sc<15 THEN
+        INC sc
+      ENDIF
+      IF mk=2 AND sc>1
+        DEC sc
+      ENDIF
+      EXIT IF INKEY$<>""
+    LOOP
+    goback=2
+    SHOWM
+  ENDIF
+  IF mx>co(3,1) AND mx<co(3,3) THEN
+    GRAPHMODE 3
+    PBOX co(3,1),co(3,2),co(3,3),co(3,4)
+    REPEAT
+    UNTIL MOUSEK=0
+    PBOX co(3,1),co(3,2),co(3,3),co(3,4)
+    GRAPHMODE 1
+    goback=2
+  ENDIF
+  IF mx>co(4,1) AND mx<co(4,3) THEN
+    GRAPHMODE 3
+    PBOX co(4,1),co(4,2),co(4,3),co(4,4)
+    REPEAT
+    UNTIL MOUSEK=0
+    PBOX co(4,1),co(4,2),co(4,3),co(4,4)
+    GRAPHMODE 1
+    ERASE grid()
+    kk=1
+    goback=3
+    timesround=1
+  ENDIF
+  IF goback=1 THEN
+    GOTO redo
+  ENDIF
+  HIDEM
+  takescreen=0
+  IF goback<>3 THEN
+    SPUT dr$
+  ENDIF
+RETURN
+PROCEDURE collate_quanta
+  ERASE f()
+  ERASE maxo()
+  DIM f(2,50)
+  DIM maxo(3)
+  FOR i=2 TO 1 STEP -1
+    IF activ!=0 AND i=2 THEN
+      GOTO ien3
+    ENDIF
+    FOR m=1 TO g(i)
+      FOR n=1 TO g(i)
+        INC f(i,grid(n,m,i))
+      NEXT n
+    NEXT m
+    maxo(i)=MAX(f(i,0),f(i,1),f(i,2),f(i,3),f(i,4),f(i,5),f(i,6),f(i,7))
+  ien3:
+  NEXT i
+  maxo(3)=maxo(1)+maxo(2)
+RETURN
+DATA 155,390,239,399,239,390,323,399,323,390,383,399,383,390,485,399
+PROCEDURE init
+  ' check screen resolution
+  rez=XBIOS(4)
+  IF rez<>2 THEN
+    ALERT 3,"| Monochrome only! ",1,"OK",ok%
+  ENDIF
+  ' fill entire screen with desktop pattern
+  CLS
+  DEFTEXT 1,0,0,13
+  DEFMOUSE 0
+  DEFFILL 1,2,4
+  PBOX 0,0,639,399
+RETURN
+PROCEDURE zest_button(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  DEFFILL 0,2,8
+  PBOX upper_x%,upper_y%,lower_x%,lower_y%
+  DEFFILL 1,2,4
+  PBOX upper_x%+1,upper_y%+1,lower_x%,lower_y%
+  LINE upper_x%+1,lower_y%,lower_x%,lower_y%
+  LINE upper_x%,lower_y%+1,lower_x%,lower_y%+1
+  LINE lower_x%,upper_y%+1,lower_x%,lower_y%
+  LINE lower_x%+1,upper_y%,lower_x%+1,lower_y%+1
+RETURN
+PROCEDURE zest_button_press(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  GET upper_x%-1,upper_y%-1,lower_x%+1,lower_y%+1,button$
+  GET upper_x%+1,upper_y%+1,lower_x%-2,lower_y%-2,shift_button$
+  PUT upper_x%+2,upper_y%+2,shift_button$
+  LINE upper_x%,upper_y%,lower_x%,upper_y%
+  LINE upper_x%,upper_y%,upper_x%,lower_y%
+  COLOR 0
+  LINE upper_x%+1,lower_y%,lower_x%,lower_y%
+  LINE upper_x%,lower_y%+1,lower_x%,lower_y%+1
+  LINE lower_x%,upper_y%+1,lower_x%,lower_y%
+  LINE lower_x%+1,upper_y%,lower_x%+1,lower_y%+1
+  COLOR 1
+  REPEAT
+    SHOWM
+  UNTIL MOUSEK=0
+  PAUSE 3
+  PUT upper_x%-1,upper_y%-1,button$
+RETURN
+PROCEDURE zest_info_box(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  DEFFILL 1,2,4
+  PBOX upper_x%,upper_y%,lower_x%,lower_y%
+  LINE upper_x%,upper_y%,lower_x%,upper_y%
+  LINE upper_x%,upper_y%+1,lower_x%,upper_y%+1
+  LINE upper_x%,upper_y%,upper_x%,lower_y%
+  LINE upper_x%+1,upper_y%,upper_x%+1,lower_y%
+  COLOR 0
+  LINE upper_x%+1,lower_y%,lower_x%,lower_y%
+  LINE upper_x%,lower_y%+1,lower_x%,lower_y%+1
+  LINE lower_x%,upper_y%+1,lower_x%,lower_y%
+  LINE lower_x%+1,upper_y%,lower_x%+1,lower_y%+1
+  COLOR 1
+RETURN
+PROCEDURE zest_text_box(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  DEFFILL 1,2,4
+  PBOX upper_x%,upper_y%,lower_x%,lower_y%
+  LINE upper_x%,upper_y%,lower_x%,upper_y%
+  LINE upper_x%,upper_y%+1,lower_x%,upper_y%+1
+  LINE upper_x%,upper_y%,upper_x%,lower_y%
+  LINE upper_x%+1,upper_y%,upper_x%+1,lower_y%
+  COLOR 0
+  LINE upper_x%+1,lower_y%,lower_x%,lower_y%
+  LINE upper_x%,lower_y%+1,lower_x%,lower_y%+1
+  LINE lower_x%,upper_y%+1,lower_x%,lower_y%
+  LINE lower_x%+1,upper_y%,lower_x%+1,lower_y%+1
+  COLOR 1
+  DEFFILL 0,2,8
+  PBOX upper_x%+2,upper_y%+2,lower_x%-2,lower_y%-2
+RETURN
+PROCEDURE zest_horiz_line(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  LINE upper_x%,upper_y%,lower_x%,lower_y%
+  COLOR 0
+  LINE upper_x%,upper_y%+1,lower_x%,lower_y%+1
+  COLOR 1
+RETURN
+PROCEDURE zest_vert_line(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  LINE upper_x%,upper_y%,lower_x%,lower_y%
+  COLOR 0
+  LINE upper_x%+1,upper_y%,lower_x%+1,lower_y%
+  COLOR 1
+RETURN
+PROCEDURE zest_line_box(upper_x%,upper_y%,lower_x%,lower_y%)
+  DEFLINE 1,1
+  COLOR 0
+  BOX upper_x%,upper_y%,lower_x%,lower_y%
+  COLOR 1
+  LINE upper_x%-1,upper_y%,upper_x%-1,lower_y%
+  LINE upper_x%+2,lower_y%-1,lower_x%-2,lower_y%-1
+  LINE lower_x%-1,upper_y%+2,lower_x%-1,lower_y%-2
+  LINE upper_x%-1,upper_y%-1,lower_x%,upper_y%-1
+RETURN
+PROCEDURE zest_window(upper_x%,upper_y%,lower_x%,lower_y%)
+  ' title bar
+  GOSUB zest_button(upper_x%,upper_y%,lower_x%,upper_y%+20)
+  ' window area
+  GOSUB zest_button(upper_x%,upper_y%+22,lower_x%,lower_y%)
+  ' close button
+  GOSUB zest_button(upper_x%+5,upper_y%+4,upper_x%+18,upper_y%+16)
+RETURN
+PROCEDURE draw_screen
+  ' Create any ZeST box, button or window by passing the
+  ' upper_x%, upper_y%, lower_x% and lower_y% coordinates
+  ' to the correct procedure.
+  ' -------------------------------------------------------------->
+  GOSUB zest_window(4,6,634,393)
+  GOSUB zest_button(18,43,550,207)
+  GOSUB zest_button(18,209,550,373)
+  GOSUB zest_info_box(34,58,188,91)
+  GOSUB zest_info_box(34,93,188,126)
+  GOSUB zest_info_box(34,128,188,161)
+  GOSUB zest_info_box(190,128,344,161)
+  GET 190,128,344,161,coverup1$
+  GOSUB zest_button(192,130,222,159)
+  GOSUB zest_vert_line(207,130,207,159)
+  GET 192,129,223,160,slider1$
+  GOSUB zest_info_box(190,93,344,126)
+  GET 190,93,344,126,coverup2$
+  GOSUB zest_button(192,95,222,124)
+  GOSUB zest_vert_line(207,95,207,124)
+  GET 192,94,223,125,slider2$
+  GOSUB zest_text_box(346,93,500,126)
+  GOSUB zest_text_box(346,128,500,161)
+  GOSUB zest_info_box(34,224,190,260)
+  GOSUB zest_info_box(34,262,190,298)
+  GOSUB zest_info_box(34,300,190,336)
+  GOSUB zest_info_box(192,300,348,336)
+  GET 192,300,348,336,coverup3$
+  GOSUB zest_button(194,302,226,334)
+  GOSUB zest_vert_line(210,302,210,334)
+  GET 194,301,227,335,slider3$
+  GOSUB zest_info_box(192,262,348,298)
+  GET 192,262,348,298,coverup4$
+  GOSUB zest_button(194,264,226,296)
+  GOSUB zest_vert_line(210,264,210,296)
+  GET 194,263,227,297,slider4$
+  GOSUB zest_text_box(350,262,506,298)
+  GOSUB zest_text_box(350,300,506,336)
+  GOSUB zest_info_box(34,179,189,197)
+  GOSUB zest_info_box(191,179,346,197)
+  GET 191,179,346,197,coverup5$
+  GOSUB zest_button(193,181,224,195)
+  GOSUB zest_vert_line(208,181,208,195)
+  GET 193,180,225,196,slider5$
+  GOSUB zest_text_box(348,179,503,197)
+  GOSUB zest_info_box(204,226,349,244)
+  GOSUB zest_button(351,226,496,244)
+  GOSUB zest_button(209,60,373,83)
+  ' -------------------------------------------------------------->
+  ' Place text throughout the interface...
+  DEFTEXT 1,0,0,13
+  GRAPHMODE 2
+  TEXT 211,22,"The Quantum Interface"
+  TEXT 46,81,"System I"
+  TEXT 49,247,"System II"
+  TEXT 47,116,"Grid Range"
+  TEXT 50,286,"Grid Range"
+  TEXT 52,324,"Quanta Seed"
+  TEXT 48,151,"Quanta Seed"
+  TEXT 49,194,"Frequency"
+  TEXT 251,241,"Status"
+  TEXT 235,77,"Run Simulation"
+  GRAPHMODE 0
+  ' -------------------------------------------------------------->
+RETURN
+PROCEDURE monitor_mouse
+  DO
+    SHOWM
+    mx%=MOUSEX
+    my%=MOUSEY
+    IF mx%>9 AND mx%<22 AND my%>10 AND my%<20 AND MOUSEK=1 THEN
+      GOSUB zest_button_press(9,10,22,22)
+      END
+      ' This button press exits the window and ends the program.
+    ENDIF
+    IF mx%>190 AND mx%<344 AND my%>128 AND my%<161 AND MOUSEK=1 AND pos_x1%<>MOUSEX-15 AND MOUSEX-15>191 AND MOUSEX+15<343 THEN
+      ' System I : Quanta Seed
+      pos_x1%=MOUSEX-15
+      ' (pos_x1%-192) reflects this sliders position from 0 to 121
+      l=(INT(7*((pos_x1%-192)+20)/120))
+      IF l>6 THEN
+        l=6
+      ENDIF
+      seed(1)=l
+      l$=STR$(l)+SPACE$(7)
+      IF l$="6       " THEN
+        l$="Random"+SPACE$(7)
+      ENDIF
+      TEXT 350,150,l$+"  "
+      PUT 190,128,coverup1$
+      PUT pos_x1%,129,slider1$
+    ENDIF
+    IF mx%>190 AND mx%<344 AND my%>93 AND my%<126 AND MOUSEK=1 AND pos_x2%<>MOUSEX-15 AND MOUSEX-15>191 AND MOUSEX+15<343 THEN
+      ' System I : Grid Range
+      pos_x2%=MOUSEX-15
+      ' (pos_x2%-192) reflects this sliders position from 0 to 121
+      l=INT(61*((pos_x2%-192)+7)/120)
+      IF l>60 THEN
+        l=60
+      ENDIF
+      gridsize(1)=l
+      l$=STR$(l)+SPACE$(7)
+      TEXT 350,116,l$
+      PUT 190,93,coverup2$
+      PUT pos_x2%,94,slider2$
+    ENDIF
+    IF mx%>192 AND mx%<348 AND my%>300 AND my%<336 AND MOUSEK=1 AND pos_x3%<>MOUSEX-16 AND MOUSEX-16>193 AND MOUSEX+16<347 THEN
+      ' System II : Quanta Seed
+      pos_x3%=MOUSEX-16
+      ' (pos_x3%-194) reflects this sliders position from 0 to 121
+      l=(INT(7*((pos_x3%-194)+20)/120))
+      IF l>6 THEN
+        l=6
+      ENDIF
+      seed(2)=l
+      l$=STR$(l)+SPACE$(7)
+      IF l$="6       " THEN
+        l$="Random"+SPACE$(7)
+      ENDIF
+      TEXT 354,323,l$+"  "
+      PUT 192,300,coverup3$
+      PUT pos_x3%,301,slider3$
+    ENDIF
+    IF mx%>192 AND mx%<348 AND my%>262 AND my%<298 AND MOUSEK=1 AND pos_x4%<>MOUSEX-16 AND MOUSEX-16>193 AND MOUSEX+16<347 THEN
+      ' System II : Grid Range
+      pos_x4%=MOUSEX-16
+      ' (pos_x4%-194) reflects this sliders position from 0 to 121
+      l=INT(61*((pos_x4%-192)+5)/120)
+      IF l>60 THEN
+        l=60
+      ENDIF
+      gridsize(2)=l
+      l$=STR$(l)+SPACE$(7)
+      TEXT 354,286,l$
+      PUT 192,262,coverup4$
+      PUT pos_x4%,263,slider4$
+    ENDIF
+    IF mx%>191 AND mx%<346 AND my%>179 AND my%<197 AND MOUSEK=1 AND pos_x5%<>MOUSEX-15 AND MOUSEX-15>192 AND MOUSEX+15<345 THEN
+      ' Frequency
+      pos_x5%=MOUSEX-15
+      ' (pos_x5%-193) reflects this sliders position from 0 to 121
+      l=INT(20000*((pos_x5%-193)+5)/120)
+      IF l>20000 THEN
+        l=20000
+      ENDIF
+      freq=l
+      l$=STR$(l)+SPACE$(7)
+      PUT 350,182,over2$
+      GRAPHMODE 2
+      TEXT 350,193,l$
+      GRAPHMODE 1
+      PUT 191,179,coverup5$
+      PUT pos_x5%,180,slider5$
+    ENDIF
+    IF mx%>351 AND mx%<496 AND my%>226 AND my%<244 AND MOUSEK=1 THEN
+      GOSUB zest_button_press(351,226,496,244)
+      ' Here is where your own code goes for button number 2
+      GRAPHMODE 2
+      IF activ!=0 THEN
+        activ!=-1
+        PUT 353,227,over$
+        TEXT 400,241,"Active"
+      ELSE
+        activ!=0
+        PUT 353,227,over$
+        TEXT 392,241,"Inactive"
+      ENDIF
+      GRAPHMODE 1
+    ENDIF
+    EXIT IF mx%>209 AND mx%<373 AND my%>60 AND my%<83 AND MOUSEK=1
+  LOOP
+  GOSUB zest_button_press(209,60,373,83)
+  CLS
+RETURN
